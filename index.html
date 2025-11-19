@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Memory Match Game</title>
+    <link rel="icon" type="image/x-icon" href="https://github.com/TitanBusinessPros/Match-Time/raw/main/Match%20Time%20Favicon.png">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            color: white;
+        }
+        
+        .container {
+            max-width: 1200px;
+            width: 100%;
+            text-align: center;
+        }
+        
+        header {
+            margin-bottom: 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .game-logo {
+            max-width: 400px;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .level-selector {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .level-btn {
+            padding: 8px 15px;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            border-radius: 5px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .level-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .level-btn.active {
+            background: rgba(255, 255, 255, 0.5);
+            font-weight: bold;
+        }
+        
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 10px;
+            margin: 0 auto 30px;
+            max-width: 800px;
+        }
+        
+        .card {
+            height: 100px;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .card::before {
+            content: "?";
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: #2c3e50;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            color: white;
+            transition: all 0.3s;
+        }
+        
+        .card.revealed::before {
+            opacity: 0;
+            visibility: hidden;
+        }
+        
+        .card.matched {
+            background: #27ae60;
+            cursor: default;
+        }
+        
+        .card.matched::before {
+            display: none;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        
+        button {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 5px;
+            background: #e74c3c;
+            color: white;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        button:hover {
+            background: #c0392b;
+            transform: translateY(-2px);
+        }
+        
+        #mute-btn {
+            background: #3498db;
+        }
+        
+        #mute-btn:hover {
+            background: #2980b9;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+        
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            text-align: center;
+            color: #333;
+            max-width: 500px;
+            width: 90%;
+        }
+        
+        .modal h2 {
+            margin-bottom: 20px;
+            color: #1a2a6c;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+        
+        .progress {
+            height: 100%;
+            background: #27ae60;
+            width: 0%;
+            transition: width 0.5s;
+        }
+        
+        .audio-notice {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            font-size: 0.9rem;
+        }
+        
+        @media (max-width: 768px) {
+            .game-board {
+                grid-template-columns: repeat(4, 1fr);
+            }
+            
+            .card {
+                height: 80px;
+                font-size: 1.5rem;
+            }
+            
+            .game-logo {
+                max-width: 300px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .game-board {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            
+            .card {
+                height: 70px;
+                font-size: 1.2rem;
+            }
+            
+            h1 {
+                font-size: 1.8rem;
+            }
+            
+            .game-logo {
+                max-width: 250px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <img src="https://github.com/TitanBusinessPros/Match-Time/raw/main/Match%20Time%20Logo.png" alt="Match Time Logo" class="game-logo">
+            <h1>Memory Match Game</h1>
+            <p>Click on boxes to reveal them for 5 seconds. Match all pairs to complete the level!</p>
+            <div class="audio-notice">Background music will start when you interact with the game</div>
+        </header>
+        
+        <div class="game-info">
+            <div>Level: <span id="current-level">1</span>/10</div>
+            <div>Moves: <span id="moves">0</span></div>
+            <div>Matches: <span id="matches">0</span>/15</div>
+            <div>Time: <span id="timer">0</span>s</div>
+        </div>
+        
+        <div class="level-selector">
+            <button class="level-btn active" data-level="1">Level 1</button>
+            <button class="level-btn" data-level="2">Level 2</button>
+            <button class="level-btn" data-level="3">Level 3</button>
+            <button class="level-btn" data-level="4">Level 4</button>
+            <button class="level-btn" data-level="5">Level 5</button>
+            <button class="level-btn" data-level="6">Level 6</button>
+            <button class="level-btn" data-level="7">Level 7</button>
+            <button class="level-btn" data-level="8">Level 8</button>
+            <button class="level-btn" data-level="9">Level 9</button>
+            <button class="level-btn" data-level="10">Level 10</button>
+        </div>
+        
+        <div class="progress-bar">
+            <div class="progress" id="progress"></div>
+        </div>
+        
+        <div class="game-board" id="game-board">
+            <!-- Cards will be generated here -->
+        </div>
+        
+        <div class="controls">
+            <button id="restart">Restart Level</button>
+            <button id="hint">Hint (3 left)</button>
+            <button id="mute-btn">Mute Music</button>
+        </div>
+    </div>
+    
+    <div class="modal" id="level-complete-modal">
+        <div class="modal-content">
+            <h2>Level Complete!</h2>
+            <p>You completed level <span id="completed-level">1</span> in <span id="completed-time">0</span> seconds with <span id="completed-moves">0</span> moves!</p>
+            <button id="next-level">Next Level</button>
+        </div>
+    </div>
+    
+    <div class="modal" id="game-complete-modal">
+        <div class="modal-content">
+            <h2>Congratulations!</h2>
+            <p>You've completed all 10 levels! You're a memory master!</p>
+            <button id="play-again">Play Again</button>
+        </div>
+    </div>
+
+    <!-- Audio Element -->
+    <audio id="background-music" loop>
+        <source src="https://github.com/TitanBusinessPros/Match-Time/raw/main/Match%20Time%20Theme%20Song.mp3" type="audio/mpeg">
+        Your browser does not support the audio element.
+    </audio>
+
+    <script>
+        // Game data for 10 levels with different items
+        const levelData = [
+            { name: "Animals", items: ["🐶", "🐱", "🐭", "🐹", "🐰", "🦊", "🐻", "🐼", "🐨", "🐯", "🦁", "🐮", "🐷", "🐸", "🐵"] },
+            { name: "Food", items: ["🍎", "🍌", "🍒", "🍇", "🍓", "🥑", "🍍", "🥥", "🥝", "🍉", "🍑", "🍋", "🍊", "🥭", "🍈"] },
+            { name: "Sports", items: ["⚽", "🏀", "🏈", "⚾", "🎾", "🏐", "🏉", "🎱", "🏓", "🏸", "🏒", "🏑", "🥍", "🏏", "🎯"] },
+            { name: "Travel", items: ["🚗", "🚕", "🚙", "🚌", "🚎", "🏎", "🚓", "🚑", "🚒", "🚐", "🚚", "🚛", "🚜", "🛴", "🚲"] },
+            { name: "Weather", items: ["☀️", "🌤", "⛅", "🌥", "☁️", "🌦", "🌧", "⛈", "🌩", "🌨", "❄️", "💨", "💧", "💦", "☔"] },
+            { name: "Music", items: ["🎹", "🎸", "🎻", "🎺", "🎷", "🪕", "🥁", "🎤", "🎧", "📻", "🎼", "🎵", "🎶", "📯", "🪗"] },
+            { name: "Faces", items: ["😀", "😂", "🥰", "😎", "🤩", "😜", "🤪", "😇", "🥳", "😍", "🤓", "😋", "🤑", "🤠", "😷"] },
+            { name: "Objects", items: ["⌚", "📱", "💻", "🖥", "🖨", "📷", "📹", "🎥", "📺", "🔦", "💡", "📞", "⏰", "📡", "💎"] },
+            { name: "Nature", items: ["🌹", "🌺", "🌸", "🌼", "🌷", "🍀", "🌲", "🌳", "🌴", "🌵", "🌾", "🌿", "☘️", "🍁", "🍂"] },
+            { name: "Symbols", items: ["❤️", "💛", "💚", "💙", "💜", "🖤", "🤍", "🤎", "💔", "❣️", "💕", "💞", "💓", "💗", "💖"] }
+        ];
+
+        // Game state
+        let gameState = {
+            currentLevel: 1,
+            moves: 0,
+            matches: 0,
+            timer: 0,
+            timerInterval: null,
+            revealedCards: [],
+            hints: 3,
+            completedLevels: JSON.parse(localStorage.getItem('completedLevels')) || [],
+            musicMuted: JSON.parse(localStorage.getItem('musicMuted')) || false
+        };
+
+        // DOM elements
+        const gameBoard = document.getElementById('game-board');
+        const currentLevelElement = document.getElementById('current-level');
+        const movesElement = document.getElementById('moves');
+        const matchesElement = document.getElementById('matches');
+        const timerElement = document.getElementById('timer');
+        const progressElement = document.getElementById('progress');
+        const levelButtons = document.querySelectorAll('.level-btn');
+        const restartButton = document.getElementById('restart');
+        const hintButton = document.getElementById('hint');
+        const muteButton = document.getElementById('mute-btn');
+        const levelCompleteModal = document.getElementById('level-complete-modal');
+        const gameCompleteModal = document.getElementById('game-complete-modal');
+        const nextLevelButton = document.getElementById('next-level');
+        const playAgainButton = document.getElementById('play-again');
+        const backgroundMusic = document.getElementById('background-music');
+
+        // Initialize the game
+        function initGame() {
+            updateGameInfo();
+            createBoard();
+            startTimer();
+            updateLevelButtons();
+            setupAudio();
+            
+            // Load saved progress
+            loadProgress();
+        }
+
+        // Setup audio functionality
+        function setupAudio() {
+            // Set initial mute state
+            backgroundMusic.muted = gameState.musicMuted;
+            updateMuteButton();
+            
+            // Add event listener for first user interaction
+            const startAudio = () => {
+                if (backgroundMusic.paused) {
+                    backgroundMusic.play().catch(e => console.log("Audio play failed:", e));
+                }
+                
+                // Remove event listeners after first interaction
+                document.removeEventListener('click', startAudio);
+                document.removeEventListener('touchstart', startAudio);
+            };
+            
+            document.addEventListener('click', startAudio);
+            document.addEventListener('touchstart', startAudio);
+        }
+
+        // Toggle mute state
+        function toggleMute() {
+            gameState.musicMuted = !gameState.musicMuted;
+            backgroundMusic.muted = gameState.musicMuted;
+            updateMuteButton();
+            saveMuteState();
+        }
+
+        // Update mute button text
+        function updateMuteButton() {
+            muteButton.textContent = gameState.musicMuted ? "Unmute Music" : "Mute Music";
+        }
+
+        // Save mute state to localStorage
+        function saveMuteState() {
+            localStorage.setItem('musicMuted', JSON.stringify(gameState.musicMuted));
+        }
+
+        // Create the game board with cards
+        function createBoard() {
+            gameBoard.innerHTML = '';
+            const levelIndex = gameState.currentLevel - 1;
+            const items = [...levelData[levelIndex].items, ...levelData[levelIndex].items];
+            
+            // Shuffle the items
+            shuffleArray(items);
+            
+            // Create cards
+            items.forEach((item, index) => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.dataset.index = index;
+                card.dataset.item = item;
+                card.innerHTML = `<span>${item}</span>`;
+                card.addEventListener('click', handleCardClick);
+                gameBoard.appendChild(card);
+            });
+            
+            // Reset game state
+            gameState.moves = 0;
+            gameState.matches = 0;
+            gameState.revealedCards = [];
+            updateGameInfo();
+        }
+
+        // Handle card click
+        function handleCardClick(e) {
+            const card = e.currentTarget;
+            
+            // Don't allow clicking already matched cards
+            if (card.classList.contains('matched')) {
+                return;
+            }
+            
+            // Don't count moves for already revealed cards
+            if (!card.classList.contains('revealed')) {
+                gameState.moves++;
+                updateGameInfo();
+            }
+            
+            // Reveal the card
+            card.classList.add('revealed');
+            
+            // Set timeout to hide the card after 5 seconds if not matched
+            setTimeout(() => {
+                if (!card.classList.contains('matched')) {
+                    card.classList.remove('revealed');
+                }
+            }, 5000);
+            
+            // Check for matches
+            checkForMatches();
+        }
+
+        // Check for matches among all revealed cards
+        function checkForMatches() {
+            const revealedCards = Array.from(document.querySelectorAll('.card.revealed:not(.matched)'));
+            const itemsMap = {};
+            
+            // Group revealed cards by their item
+            revealedCards.forEach(card => {
+                const item = card.dataset.item;
+                if (!itemsMap[item]) {
+                    itemsMap[item] = [];
+                }
+                itemsMap[item].push(card);
+            });
+            
+            // Check for pairs
+            Object.values(itemsMap).forEach(cards => {
+                if (cards.length >= 2) {
+                    // We have a match!
+                    cards[0].classList.add('matched');
+                    cards[1].classList.add('matched');
+                    gameState.matches += 1;
+                    updateGameInfo();
+                    
+                    // Check if level is complete
+                    if (gameState.matches === 15) {
+                        levelComplete();
+                    }
+                }
+            });
+        }
+
+        // Level complete
+        function levelComplete() {
+            clearInterval(gameState.timerInterval);
+            
+            // Update completed levels
+            if (!gameState.completedLevels.includes(gameState.currentLevel)) {
+                gameState.completedLevels.push(gameState.currentLevel);
+                saveProgress();
+            }
+            
+            // Update modal content
+            document.getElementById('completed-level').textContent = gameState.currentLevel;
+            document.getElementById('completed-time').textContent = gameState.timer;
+            document.getElementById('completed-moves').textContent = gameState.moves;
+            
+            // Show modal
+            if (gameState.currentLevel === 10) {
+                gameCompleteModal.style.display = 'flex';
+            } else {
+                levelCompleteModal.style.display = 'flex';
+            }
+        }
+
+        // Update game info display
+        function updateGameInfo() {
+            currentLevelElement.textContent = gameState.currentLevel;
+            movesElement.textContent = gameState.moves;
+            matchesElement.textContent = gameState.matches;
+            timerElement.textContent = gameState.timer;
+            
+            // Update progress bar
+            const progress = (gameState.matches / 15) * 100;
+            progressElement.style.width = `${progress}%`;
+            
+            // Update hint button
+            hintButton.textContent = `Hint (${gameState.hints} left)`;
+        }
+
+        // Start the timer
+        function startTimer() {
+            clearInterval(gameState.timerInterval);
+            gameState.timer = 0;
+            gameState.timerInterval = setInterval(() => {
+                gameState.timer++;
+                timerElement.textContent = gameState.timer;
+            }, 1000);
+        }
+
+        // Shuffle array (Fisher-Yates algorithm)
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        // Update level buttons based on completion
+        function updateLevelButtons() {
+            levelButtons.forEach(button => {
+                const level = parseInt(button.dataset.level);
+                button.classList.toggle('active', level === gameState.currentLevel);
+                
+                // Mark completed levels
+                if (gameState.completedLevels.includes(level)) {
+                    button.style.background = 'rgba(39, 174, 96, 0.7)';
+                }
+            });
+        }
+
+        // Save progress to localStorage
+        function saveProgress() {
+            localStorage.setItem('completedLevels', JSON.stringify(gameState.completedLevels));
+        }
+
+        // Load progress from localStorage
+        function loadProgress() {
+            const savedLevels = localStorage.getItem('completedLevels');
+            if (savedLevels) {
+                gameState.completedLevels = JSON.parse(savedLevels);
+                updateLevelButtons();
+            }
+        }
+
+        // Event listeners
+        levelButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const level = parseInt(button.dataset.level);
+                if (level <= Math.max(...gameState.completedLevels) + 1 || level === 1) {
+                    gameState.currentLevel = level;
+                    initGame();
+                }
+            });
+        });
+
+        restartButton.addEventListener('click', initGame);
+
+        hintButton.addEventListener('click', () => {
+            if (gameState.hints > 0) {
+                // Find two unmatched cards that are the same and not currently revealed
+                const unrevealedCards = Array.from(document.querySelectorAll('.card:not(.matched):not(.revealed)'));
+                const cardMap = {};
+                
+                for (const card of unrevealedCards) {
+                    const item = card.dataset.item;
+                    if (!cardMap[item]) {
+                        cardMap[item] = [];
+                    }
+                    cardMap[item].push(card);
+                }
+                
+                // Find a pair that hasn't been matched
+                for (const item in cardMap) {
+                    if (cardMap[item].length >= 2) {
+                        const [card1, card2] = cardMap[item];
+                        
+                        // Reveal the hint cards
+                        card1.classList.add('revealed');
+                        card2.classList.add('revealed');
+                        
+                        // They will automatically be matched by the checkForMatches function
+                        
+                        gameState.hints--;
+                        updateGameInfo();
+                        break;
+                    }
+                }
+            }
+        });
+
+        muteButton.addEventListener('click', toggleMute);
+
+        nextLevelButton.addEventListener('click', () => {
+            levelCompleteModal.style.display = 'none';
+            if (gameState.currentLevel < 10) {
+                gameState.currentLevel++;
+                initGame();
+            }
+        });
+
+        playAgainButton.addEventListener('click', () => {
+            gameCompleteModal.style.display = 'none';
+            gameState.currentLevel = 1;
+            gameState.hints = 3;
+            initGame();
+        });
+
+        // Initialize the game when the page loads
+        window.addEventListener('load', initGame);
+    </script>
+</body>
+</html>
